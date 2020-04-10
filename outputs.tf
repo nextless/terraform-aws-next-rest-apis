@@ -40,22 +40,12 @@ output "lambda_exec_role_arn" {
   description = "IAM role attached to the Lambda Function"
 }
 
-output "api_gateway_exec_lambda_role_name" {
-  value       = aws_iam_role.serverless_roles[1].name
-  description = "The name of IAM role used as the api_gateway_integration credentials for lambda service"
-}
-
-output "api_gateway_exec_lambda_role_arn" {
-  value       = aws_iam_role.serverless_roles[1].arn
-  description = "IAM role used as the api_gateway_integration credentials for lambda service"
-}
-
 output "api_gateway_get_s3_role_name" {
-  value       = aws_iam_role.serverless_roles[2].name
+  value       = aws_iam_role.serverless_roles[1].name
   description = "The name of IAM role used as the api_gateway_integration credentials for S3 service"
 }
 
 output "api_gateway_get_s3_role_arn" {
-  value       = aws_iam_role.serverless_roles[2].arn
+  value       = aws_iam_role.serverless_roles[1].arn
   description = "IAM role used as the api_gateway_integration credentials for S3 service"
 }

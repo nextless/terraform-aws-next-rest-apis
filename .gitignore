@@ -1,0 +1,15 @@
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+.terraform
+*.tfstate*
+*.test
+
+*.out
+
+vendor/
+
+.DS_Store
