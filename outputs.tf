@@ -31,21 +31,21 @@ output "api_gateway_deployment_execution_arn" {
 }
 
 output "lambda_exec_role_name" {
-  value       = aws_iam_role.serverless_roles[0].name
+  value       = local.lambda_exec_role.name
   description = "The name of IAM role attached to the Lambda Function"
 }
 
 output "lambda_exec_role_arn" {
-  value       = aws_iam_role.serverless_roles[0].arn
+  value       = local.lambda_exec_role.arn
   description = "IAM role attached to the Lambda Function"
 }
 
 output "api_gateway_get_s3_role_name" {
-  value       = aws_iam_role.serverless_roles[1].name
+  value       = local.api_get_s3_object_role.name
   description = "The name of IAM role used as the api_gateway_integration credentials for S3 service"
 }
 
 output "api_gateway_get_s3_role_arn" {
-  value       = aws_iam_role.serverless_roles[1].arn
+  value       = local.api_get_s3_object_role.arn
   description = "IAM role used as the api_gateway_integration credentials for S3 service"
 }

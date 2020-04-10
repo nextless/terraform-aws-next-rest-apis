@@ -34,6 +34,7 @@ paths:
             statusCode: '200'
         type: aws_proxy
         httpMethod: POST
-        uri: 'arn:aws:apigateway:${apigateway_region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${lambda_region}:${account_id}:function:${project}ApiPingHandler:lQ7wIyxGvblIltvKOkLL/invocations'
+        credentials: ${lambda_excution_role_arn}
+        uri: 'arn:aws:apigateway:${apigateway_region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${lambda_region}:${account_id}:function:${project}ApiPingHandler:$${stageVariables.build_id}/invocations'
         connectionType: INTERNET
         payloadFormatVersion: 2
