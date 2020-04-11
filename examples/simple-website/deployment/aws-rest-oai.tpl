@@ -21,7 +21,7 @@ paths:
               method.response.header.Content-Length: 'integration.response.header.Content-Length'
               method.response.header.Timestamp: 'integration.response.header.Date'
         credentials: ${s3_read_object_role_arn}
-        uri: 'arn:aws:apigateway:${s3_region}:s3:path/${s3_bucket}/${s3_serverless_folder}/statics/index.html'
+        uri: 'arn:aws:apigateway:${s3_region}:s3:path/${s3_bucket}/${s3_serverless_folder}/statics/$${stageVariables.build_id}/index.html'
         passthroughBehavior: when_no_match
         httpMethod: GET
         type: aws

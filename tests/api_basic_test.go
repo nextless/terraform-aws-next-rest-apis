@@ -41,7 +41,6 @@ func TestNextlessAwsRestApiBasicUsage(t *testing.T) {
 
 			"s3_serverless_folder":  s3Folder,
 			"static_s3_bucket_name": s3BucketName,
-			"aws_api_apis_build_id": "lQ7wIyxGvblIltvKOkLL",
 
 			"openapi_tpl_path":         fmt.Sprintf("%s/deployment/aws-rest-oai.tpl", exampleDir),
 			"api_gateway_deploy_stage": stageName,
