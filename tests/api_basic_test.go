@@ -21,28 +21,18 @@ func TestNextlessAwsRestApiBasicUsage(t *testing.T) {
 	rootDir := test_structure.CopyTerraformFolderToTemp(t, "..", "/")
 	exampleDir := fmt.Sprintf("%s/examples/simple-website", rootDir)
 
-	s3Folder := "serverless"
 	region := aws.GetRandomStableRegion(t, nil, nil)
 	stageName := random.UniqueId()
-
-	defer emptyAndDeleteS3Bucket(t, region, s3BucketName)
-	aws.CreateS3Bucket(t, region, s3BucketName)
-
-	uploadFolderToS3(t, region, s3BucketName, fmt.Sprintf("%s/dist", exampleDir), s3Folder)
 
 	terraformOptions := &terraform.Options{
 		TerraformDir: rootDir,
 
 		Vars: map[string]interface{}{
-			"region":        region,
-			"lambda_region": region,
-			"s3_region":     region,
-			"project":       project,
+			"project":        project,
+			"s3_bucket_name": s3BucketName,
 
-			"s3_serverless_folder":  s3Folder,
-			"static_s3_bucket_name": s3BucketName,
-
-			"openapi_tpl_path":         fmt.Sprintf("%s/deployment/aws-rest-oai.tpl", exampleDir),
+			"next_dist_dir":            fmt.Sprintf("%s/dest", exampleDir),
+			"openapi_tpl_path":         fmt.Sprintf("%s/deployment/nextless/aws-rest-oai.tpl", exampleDir),
 			"api_gateway_deploy_stage": stageName,
 		},
 
@@ -50,7 +40,7 @@ func TestNextlessAwsRestApiBasicUsage(t *testing.T) {
 			"AWS_DEFAULT_REGION": region,
 		},
 
-		VarFiles: []string{fmt.Sprintf("%s/deployment/aws-rest-apis-nextless.tfvars", exampleDir)},
+		VarFiles: []string{fmt.Sprintf("%s/deployment/nextless/aws-rest-apis-nextless.tfvars", exampleDir)},
 	}
 
 	defer terraform.Destroy(t, terraformOptions)

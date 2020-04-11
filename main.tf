@@ -1,11 +1,14 @@
 data "aws_caller_identity" "current" {}
 
+data "aws_region" "current" {}
+
 locals {
   exec_roles = [
     { name = "${var.project}LambdaExecRole", principal = "lambda.amazonaws.com" },
     { name = "${var.project}ApiGatewayInvokeLambdaRole", principal = "apigateway.amazonaws.com" },
     { name = "${var.project}ApiGatewayGetS3ObjectRole", principal = "apigateway.amazonaws.com" },
   ]
+  s3_serverless_folder = "serverless"
 }
 
 data "aws_iam_policy_document" "serverless_roles" {
@@ -28,23 +31,50 @@ resource "aws_iam_role" "serverless_roles" {
 }
 
 locals {
+  // @todo Support customize lambda exec role arn
   lambda_exec_role       = aws_iam_role.serverless_roles[0]
   api_invoke_lambda_role = aws_iam_role.serverless_roles[1]
   api_get_s3_object_role = aws_iam_role.serverless_roles[2]
 }
 
-// Both of the lambda_function and alias should not be deleted when deploying
-// Blocked by https://github.com/hashicorp/terraform/issues/15485
+resource "aws_s3_bucket" "serverless" {
+  bucket        = var.s3_bucket_name
+  acl           = "private"
+  force_destroy = true
+
+  lifecycle_rule {
+    enabled = true
+    id      = "functions_zip_files"
+    prefix  = "serverless/functions/"
+
+    expiration {
+      days = 1
+    }
+  }
+}
+
+resource "null_resource" "serverless" {
+  triggers = {
+    build_id = var.aws_api_apis_build_id
+  }
+
+  provisioner "local-exec" {
+    working_dir = "${var.next_dist_dir}/nextless"
+    command     = "aws s3 cp ./ s3://${aws_s3_bucket.serverless.id}/serverless --recursive --region ${data.aws_region.current.name}"
+  }
+}
+
 resource "aws_lambda_function" "apis" {
   for_each      = var.aws_api_apis_functions
   function_name = "${var.project}${each.key}"
 
-  s3_bucket = var.static_s3_bucket_name
-  s3_key    = "${var.s3_serverless_folder}/${each.value}"
-  publish   = true
-  handler   = "index.handler"
-  runtime   = "nodejs12.x"
-  role      = local.lambda_exec_role.arn
+  s3_bucket  = aws_s3_bucket.serverless.id
+  s3_key     = "${local.s3_serverless_folder}/${each.value}"
+  publish    = true
+  handler    = "index.handler"
+  runtime    = "nodejs12.x"
+  role       = local.lambda_exec_role.arn
+  depends_on = [null_resource.serverless]
 }
 
 resource "aws_iam_role_policy_attachment" "attach_lambda_basic_policy" {
@@ -52,6 +82,8 @@ resource "aws_iam_role_policy_attachment" "attach_lambda_basic_policy" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
 }
 
+// Previous lambda alias should not be deleted when deploying
+// Blocked by https://github.com/hashicorp/terraform/issues/15485
 // @todo aviod deleting previous alias by using local-exec as a workaround
 resource "aws_lambda_alias" "apis" {
   for_each         = var.aws_api_apis_functions
@@ -66,7 +98,7 @@ data "aws_iam_policy_document" "allow_gateway_invoce_lambdas" {
       "lambda:InvokeFunction"
     ]
     resources = [
-      "arn:aws:lambda:${var.lambda_region}:${data.aws_caller_identity.current.account_id}:function:${var.project}*"
+      "arn:aws:lambda:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:function:${var.project}*"
     ]
   }
 }
@@ -89,7 +121,7 @@ data "aws_iam_policy_document" "allow_gateway_access_s3" {
       "s3:GetObject"
     ]
     resources = [
-      "arn:aws:s3:::${var.static_s3_bucket_name}/${var.s3_serverless_folder}/statics/*"
+      "arn:aws:s3:::${aws_s3_bucket.serverless.id}/${local.s3_serverless_folder}/statics/*"
     ]
   }
 }
@@ -109,11 +141,9 @@ resource "aws_iam_role_policy_attachment" "attach_s3_readObject_policy" {
 data "template_file" "api-gateway" {
   template = file(var.openapi_tpl_path)
   vars = {
-    apigateway_region    = var.region
-    lambda_region        = var.lambda_region
-    s3_region            = var.s3_region
-    s3_bucket            = var.static_s3_bucket_name
-    s3_serverless_folder = var.s3_serverless_folder
+    region               = data.aws_region.current.name
+    s3_bucket            = aws_s3_bucket.serverless.id
+    s3_serverless_folder = local.s3_serverless_folder
     account_id           = data.aws_caller_identity.current.account_id
     project              = var.project
 

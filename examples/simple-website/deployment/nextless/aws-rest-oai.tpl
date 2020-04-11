@@ -21,7 +21,7 @@ paths:
               method.response.header.Content-Length: 'integration.response.header.Content-Length'
               method.response.header.Timestamp: 'integration.response.header.Date'
         credentials: ${s3_read_object_role_arn}
-        uri: 'arn:aws:apigateway:${s3_region}:s3:path/${s3_bucket}/${s3_serverless_folder}/statics/$${stageVariables.build_id}/index.html'
+        uri: 'arn:aws:apigateway:${region}:s3:path/${s3_bucket}/${s3_serverless_folder}/statics/$${stageVariables.build_id}/index.html'
         passthroughBehavior: when_no_match
         httpMethod: GET
         type: aws
@@ -35,6 +35,6 @@ paths:
         type: aws_proxy
         httpMethod: POST
         credentials: ${lambda_excution_role_arn}
-        uri: 'arn:aws:apigateway:${apigateway_region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${lambda_region}:${account_id}:function:${project}ApiPingHandler:$${stageVariables.build_id}/invocations'
+        uri: 'arn:aws:apigateway:${region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${region}:${account_id}:function:${project}ApiPingHandler:$${stageVariables.build_id}/invocations'
         connectionType: INTERNET
         payloadFormatVersion: 2

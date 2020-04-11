@@ -10,6 +10,7 @@ For more information please refer to the [Nextless repo](https://github.com/next
 
 ## Features
 
+* Create S3 bucket and upload lambda zips and static files automatically.
 * Create lambda functions from S3 bucket with current BUILD_ID as alias.
 * Create necessary IAM roles for API Gateway to execute Lambda functions and read files from S3 Bucket. 
 * Using OAI (OpenAPI Specification file) to create Rest API gateway.
