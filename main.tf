@@ -53,6 +53,10 @@ resource "aws_s3_bucket" "serverless" {
   }
 }
 
+locals {
+  serverless_bucket_path = "s3://${aws_s3_bucket.serverless.id}/serverless"
+}
+
 resource "null_resource" "serverless_assets" {
   triggers = {
     build_id = var.aws_api_apis_build_id
@@ -60,7 +64,7 @@ resource "null_resource" "serverless_assets" {
 
   provisioner "local-exec" {
     working_dir = "${var.next_dist_dir}/nextless"
-    command     = "aws s3 cp ./ s3://${aws_s3_bucket.serverless.id}/serverless --recursive --region ${data.aws_region.current.name}"
+    command     = "aws s3 cp ./ ${local.serverless_bucket_path} --recursive --region ${data.aws_region.current.name}"
   }
 }
 
@@ -82,14 +86,24 @@ resource "aws_iam_role_policy_attachment" "attach_lambda_basic_policy" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
 }
 
-// Previous lambda alias should not be deleted when deploying
-// Blocked by https://github.com/hashicorp/terraform/issues/15485
-// @todo aviod deleting previous alias by using local-exec as a workaround
-resource "aws_lambda_alias" "apis" {
-  for_each         = var.aws_api_apis_functions
-  name             = var.aws_api_apis_build_id
-  function_name    = aws_lambda_function.apis[each.key].arn
-  function_version = aws_lambda_function.apis[each.key].version
+// Aviod deleting previous alias by using local-exec as a workaround
+resource "null_resource" "lambda_function_alias" {
+  for_each = var.aws_api_apis_functions
+
+  triggers = {
+    build_id = var.aws_api_apis_build_id
+  }
+
+  provisioner "local-exec" {
+    command = <<-EOT
+      aws lambda create-alias \
+      --function-name ${aws_lambda_function.apis[each.key].arn} \
+      --function-version ${aws_lambda_function.apis[each.key].version} \
+      --description "alias for ${var.project} API Gateway" \
+      --name ${var.aws_api_apis_build_id} \
+      --region ${data.aws_region.current.name}
+    EOT
+  }
 }
 
 data "aws_iam_policy_document" "allow_gateway_invoce_lambdas" {
@@ -160,7 +174,7 @@ resource "aws_api_gateway_rest_api" "primary" {
     types = [var.gateway_endpoint_type]
   }
 
-  depends_on = [aws_lambda_alias.apis, null_resource.serverless_assets]
+  depends_on = [null_resource.lambda_function_alias, null_resource.serverless_assets]
 }
 
 resource "aws_api_gateway_deployment" "primary" {
