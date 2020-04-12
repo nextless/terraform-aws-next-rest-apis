@@ -19,7 +19,7 @@ func TestNextlessAwsRestApiBasicUsage(t *testing.T) {
 	s3BucketName := fmt.Sprintf("nextless%s", strings.ToLower(random.UniqueId()))
 
 	rootDir := test_structure.CopyTerraformFolderToTemp(t, "..", "/")
-	exampleDir := fmt.Sprintf("%s/examples/simple-website", rootDir)
+	exampleDir := fmt.Sprintf("%s/examples/nextless-output", rootDir)
 
 	region := aws.GetRandomStableRegion(t, nil, nil)
 	stageName := random.UniqueId()
