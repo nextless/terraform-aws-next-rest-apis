@@ -41,20 +41,10 @@ resource "aws_s3_bucket" "serverless" {
   bucket        = var.s3_bucket_name
   acl           = "private"
   force_destroy = true
-
-  lifecycle_rule {
-    enabled = true
-    id      = "functions_zip_files"
-    prefix  = "serverless/functions/"
-
-    expiration {
-      days = 1
-    }
-  }
 }
 
 locals {
-  serverless_bucket_path = "s3://${aws_s3_bucket.serverless.id}/serverless"
+  serverless_bucket_path = "s3://${aws_s3_bucket.serverless.id}/serverless/${var.aws_api_apis_build_id}"
 }
 
 resource "null_resource" "serverless_assets" {
@@ -66,6 +56,7 @@ resource "null_resource" "serverless_assets" {
     working_dir = "${var.next_dist_dir}/nextless"
     command     = "aws s3 cp ./ ${local.serverless_bucket_path} --recursive --region ${data.aws_region.current.name}"
   }
+  depends_on = [aws_s3_bucket.serverless]
 }
 
 resource "aws_lambda_function" "apis" {
@@ -73,7 +64,7 @@ resource "aws_lambda_function" "apis" {
   function_name = "${var.project}${each.key}"
 
   s3_bucket  = aws_s3_bucket.serverless.id
-  s3_key     = "${local.s3_serverless_folder}/${each.value}"
+  s3_key     = "${local.s3_serverless_folder}/${var.aws_api_apis_build_id}/${each.value}"
   publish    = true
   handler    = "index.handler"
   runtime    = "nodejs12.x"
@@ -104,6 +95,18 @@ resource "null_resource" "lambda_function_alias" {
       --region ${data.aws_region.current.name}
     EOT
   }
+  depends_on = [aws_lambda_function.apis]
+}
+
+resource "null_resource" "remove_used_function_zips" {
+  triggers = {
+    build_id = var.aws_api_apis_build_id
+  }
+
+  provisioner "local-exec" {
+    command = "aws s3 rm ${local.serverless_bucket_path}/functions --recursive --region ${data.aws_region.current.name}"
+  }
+  depends_on = [aws_lambda_function.apis]
 }
 
 data "aws_iam_policy_document" "allow_gateway_invoce_lambdas" {
@@ -135,7 +138,7 @@ data "aws_iam_policy_document" "allow_gateway_access_s3" {
       "s3:GetObject"
     ]
     resources = [
-      "arn:aws:s3:::${aws_s3_bucket.serverless.id}/${local.s3_serverless_folder}/statics/*"
+      "arn:aws:s3:::${aws_s3_bucket.serverless.id}/${local.s3_serverless_folder}/*/statics/*"
     ]
   }
 }
