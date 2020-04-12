@@ -53,7 +53,7 @@ resource "aws_s3_bucket" "serverless" {
   }
 }
 
-resource "null_resource" "serverless" {
+resource "null_resource" "serverless_assets" {
   triggers = {
     build_id = var.aws_api_apis_build_id
   }
@@ -74,7 +74,7 @@ resource "aws_lambda_function" "apis" {
   handler    = "index.handler"
   runtime    = "nodejs12.x"
   role       = local.lambda_exec_role.arn
-  depends_on = [null_resource.serverless]
+  depends_on = [null_resource.serverless_assets]
 }
 
 resource "aws_iam_role_policy_attachment" "attach_lambda_basic_policy" {
@@ -159,6 +159,8 @@ resource "aws_api_gateway_rest_api" "primary" {
   endpoint_configuration {
     types = [var.gateway_endpoint_type]
   }
+
+  depends_on = [aws_lambda_alias.apis, null_resource.serverless_assets]
 }
 
 resource "aws_api_gateway_deployment" "primary" {
