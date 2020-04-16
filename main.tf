@@ -109,7 +109,7 @@ resource "null_resource" "remove_used_function_zips" {
   depends_on = [aws_lambda_function.apis]
 }
 
-data "aws_iam_policy_document" "allow_gateway_invoce_lambdas" {
+data "aws_iam_policy_document" "allow_gateway_invoke_lambdas" {
   statement {
     actions = [
       "lambda:InvokeFunction"
@@ -120,16 +120,16 @@ data "aws_iam_policy_document" "allow_gateway_invoce_lambdas" {
   }
 }
 
-resource "aws_iam_policy" "allow_gateway_invoce_lambdas" {
+resource "aws_iam_policy" "allow_gateway_invoke_lambdas" {
   name        = "${var.project}ApiGatewayInvokeLambdasPolicy"
   description = "Allow S3:GetObject permission for API Gateway"
 
-  policy = data.aws_iam_policy_document.allow_gateway_invoce_lambdas.json
+  policy = data.aws_iam_policy_document.allow_gateway_invoke_lambdas.json
 }
 
 resource "aws_iam_role_policy_attachment" "attach_lambda_invoke_policy" {
   role       = local.api_invoke_lambda_role.name
-  policy_arn = aws_iam_policy.allow_gateway_invoce_lambdas.arn
+  policy_arn = aws_iam_policy.allow_gateway_invoke_lambdas.arn
 }
 
 data "aws_iam_policy_document" "allow_gateway_access_s3" {
