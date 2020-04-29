@@ -6,7 +6,7 @@ This module helps your deploy your [Next.js](https://nextjs.org/) application to
 
 For more information please refer to the [Nextless repo](https://github.com/nextless/nextless).
 
-![architecture](https://raw.githubusercontent.com/nextless/aws-rest-apis/master/_docs/nextless-aws-rest-gateway.png)
+![architecture](https://raw.githubusercontent.com/nextless/terraform-aws-next-rest-apis/master/_docs/nextless-aws-rest-gateway.png)
 
 ## Features
 
@@ -18,4 +18,4 @@ For more information please refer to the [Nextless repo](https://github.com/next
 
 ## License
 
-Please see [LICENSE](https://github.com/nextless/aws-rest-apis/blob/master/LICENSE) for details on how the code in this repo is licensed.
+Please see [LICENSE](https://github.com/nextless/terraform-aws-next-rest-apis/blob/master/LICENSE) for details on how the code in this repo is licensed.
